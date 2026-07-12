@@ -60,3 +60,7 @@ Removal forms of other archives: [Pushshift](https://docs.google.com/forms/d/1JS
 If you have questions, you can DM me on [discord](https://discord.com/users/282513022734565377) (*raiderbv* if the link doesn't work) or [email](mailto:arctic.shift.contact@gmail.com
 ).
 Alternatively open an issue or pull request.
+
+&nbsp;
+
+If you want to support my projects, you can donate through [PayPal](https://www.paypal.com/donate/?hosted_button_id=ETRZR27L7GPPA) or [buy me a coffee](https://www.buymeacoffee.com/ArtHeitmann).
