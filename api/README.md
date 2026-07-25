@@ -403,7 +403,8 @@ But in short:
 
 If you're a normal user and only make a couple requests per second, you have nothing to worry about.
 
-But if you make excessive requests, you might get rate limited. Look at the `X-RateLimit-Remaining` header to see how many request are remaining. `X-RateLimit-Reset` shows when the rate limit is reset. Rate limits can change at any time.
+But if you make excessive requests, you might get rate limited. Rate limits are calculated dynamically based on server load and request complexity.
+If you receive a 429 rate limit error code, you have to wait until your limits reset. You can use the `X-RateLimit-Reset` (seconds until reset) or `X-RateLimit-Reset-At` (timestamp of next reset) headers.
 
 Remember, this is a free service, so be considerate. If you want to process massive amounts of data, use the monthly dumps instead.
 
