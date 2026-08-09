@@ -23,7 +23,7 @@ interface RedditComment_2026 {
 	}[],
 	author_flair_template_id: null|string,
 	author_flair_text: null|string,
-	author_flair_text_color: null|"dark"|"light",
+	author_flair_text_color: null|"dark"|"light"|"",
 	author_flair_type?: "text"|"richtext",
 	author_fullname?: string,
 	author_is_blocked: boolean,
