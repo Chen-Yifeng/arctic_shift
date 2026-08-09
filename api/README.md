@@ -77,6 +77,7 @@ Common parameters:
 | `sort`              | `asc` \| `desc`             |         | Results are sorted by `created_utc`                                                              |
 | `md2html`           | `boolean`                   | `false` | If `true`, adds auto generated `selftext_html`/`body_html` field                                 |
 | `fields`            | `string`                    |         | Comma separated list of fields to return ([more info](#selectable-fields))                       |
+| `format`            | `json` \| `rss` \| `jsonfeed`| `json`  | Response format                                                                                  |
 
 Post search parameters:
 
