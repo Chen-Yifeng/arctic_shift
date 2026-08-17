@@ -1,48 +1,61 @@
 """
-采集 Reddit 上关于 ChatGPT 的讨论（帖子 + 评论），按天过滤输出为 JSONL。
+采集 Reddit 上关于主流 AI 大模型的讨论（帖子 + 评论），按时间过滤输出为 JSONL。
+
+覆盖模型: ChatGPT、Claude、Gemini、DeepSeek、Kimi、Mistral
 
 用法:
     1. pip install zstandard        # 解析 .zst 必需
     2. 用种子客户端下载某个月的转储（建议只勾选 submissions 文件，见下载说明）
     3. 把 PATH 改成你下载的 .zst 文件路径
-    4. 确认 START / END 覆盖你要的那一天
-    5. python scripts/collect_chatgpt.py
+    4. 确认 START / END 覆盖你要的那段时间
+    5. python scripts/collect_ai_models.py
 
-输出: chatgpt_discussion.jsonl （每行一条匹配的帖子或评论）
+输出: ai_models_discussion.jsonl （每行一条匹配的帖子或评论，`models` 字段标明命中的模型）
 
 提示: 数据量很大时，建议 pip install orjson 并把下面的 `import json`
       换成 `import orjson as json`（dumps 返回 bytes，需 .decode()），解析会快很多。
 """
 import os
 import json
+from collections import Counter
 from datetime import datetime, timezone
 import zstandard
 
 # ===== 配置 =====
 # 单个 .zst 文件，或一个文件夹路径（文件夹时会处理里面所有支持的文件）
-PATH = r""
+PATH = r"G:\Downloads\reddit\submissions\RS_2026-07.zst"
 RECURSIVE = False                    # PATH 是文件夹时是否递归子目录
 
-# 关键词（全部小写，匹配标题+正文，或评论正文）
-KEYWORDS = ["chatgpt", "gpt-4", "gpt4", "gpt-4o", "openai"]
+# 每个模型的关键词（全部小写，匹配标题+正文，或评论正文）
+MODELS = {
+    "chatgpt":  ["chatgpt", "chat gpt", "gpt-4", "gpt4", "gpt-4o", "gpt-5", "gpt5", "openai"],
+    "claude":   ["claude", "anthropic"],
+    "gemini":   ["gemini", "deepmind"],
+    "deepseek": ["deepseek", "deep seek"],
+    "kimi":     ["kimi", "moonshot"],
+    "mistral":  ["mistral", "le chat", "lechat", "codestral"],
+}
 
 # 只保留这些 subreddit（留空 set() = 全部 subreddit）
 # 例如 {"ChatGPT", "OpenAI", "artificial", "singularity"}
 SUBREDDITS = set()
 
-# 只保留这一天（UTC 时间；请与你下载的月份对应）
+# 只保留这个时间段（UTC 时间；请与你下载的月份对应）
 START = datetime(2026, 7, 1, tzinfo=timezone.utc)
-END = datetime(2026, 7, 2, tzinfo=timezone.utc)
+END = datetime(2026, 8, 1, tzinfo=timezone.utc)
 
-OUT_FILE = "chatgpt_discussion.jsonl"
+OUT_FILE = "ai_models_discussion.jsonl"
 # =================
 
+MODEL_COUNTS = Counter()
 
-def match(text):
+
+def match_models(text):
+    """返回命中的所有模型名（可能多个），无匹配返回空列表。"""
     if not text:
-        return False
+        return []
     t = text.lower()
-    return any(k in t for k in KEYWORDS)
+    return [name for name, kws in MODELS.items() if any(k in t for k in kws)]
 
 
 def in_time(created_utc):
@@ -92,7 +105,8 @@ def process_file(path, out):
             is_post = "title" in row
             text = (row.get("title", "") + "\n" + row.get("selftext", "")) if is_post \
                    else row.get("body", "")
-            if not match(text):
+            models = match_models(text)
+            if not models:
                 continue
 
             permalink = row.get("permalink", "")
@@ -101,14 +115,16 @@ def process_file(path, out):
                 keep = {"type": "post", "id": row.get("id"), "subreddit": sub,
                         "author": row.get("author"), "created_utc": created,
                         "score": row.get("score"), "num_comments": row.get("num_comments"),
-                        "title": row.get("title"), "selftext": row.get("selftext"), "url": url}
+                        "title": row.get("title"), "selftext": row.get("selftext"),
+                        "models": models, "url": url}
             else:
                 keep = {"type": "comment", "id": row.get("id"), "subreddit": sub,
                         "author": row.get("author"), "created_utc": created,
                         "score": row.get("score"), "body": row.get("body"),
                         "link_id": row.get("link_id"), "parent_id": row.get("parent_id"),
-                        "url": url}
+                        "models": models, "url": url}
             out.write(json.dumps(keep, ensure_ascii=False) + "\n")
+            MODEL_COUNTS.update(models)
             matched += 1
             if matched % 1000 == 0:
                 print(f"\r{os.path.basename(path)} 已匹配 {matched:,} 条", end="")
@@ -136,6 +152,10 @@ def main():
             print(f"[{i+1}/{len(files)}] 处理 {f}")
             total += process_file(f, out)
     print(f"\n完成，共采集 {total:,} 条 → {OUT_FILE}")
+    if MODEL_COUNTS:
+        print("各模型命中条数（一条可命中多个模型）:")
+        for name, count in MODEL_COUNTS.most_common():
+            print(f"  {name:>8}: {count:,}")
 
 
 if __name__ == "__main__":
