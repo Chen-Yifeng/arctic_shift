@@ -20,7 +20,7 @@ import zstandard
 
 # ===== 配置 =====
 # 单个 .zst 文件，或一个文件夹路径（文件夹时会处理里面所有支持的文件）
-PATH = r"/Users/chenyifeng/Downloads/reddit/comments/RC_2026-07.zst"
+PATH = r""
 RECURSIVE = False                    # PATH 是文件夹时是否递归子目录
 
 # 关键词（全部小写，匹配标题+正文，或评论正文）
